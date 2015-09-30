@@ -1,0 +1,40 @@
+#ifndef INCLUDE_DESERIALIZE_PARSEBOOL_H_
+#define INCLUDE_DESERIALIZE_PARSEBOOL_H_
+
+#include <cstdint>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename S >
+bool ParseBool( bool &data, S &p ) {
+
+  %% machine BoolParser;
+  %% write data;
+
+  int cs;
+  S pe = p.End( );
+  S eof = p.End( );
+
+  %% write init;
+  %%{
+
+    action RET_VAL { return true; }
+    action RET_ERROR { return false; }
+    action SET_TRUE { data = true; }
+    action SET_FALSE { data = false; }
+    value := ( 'true' %SET_TRUE | 'false' %SET_FALSE ) ( ',' | '}' | ']' ) $RET_VAL $!RET_ERROR;
+
+  }%%
+
+  %% write exec;
+
+  return false;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif          // INCLUDE_DESERIALIZE_PARSEBOOL_H_

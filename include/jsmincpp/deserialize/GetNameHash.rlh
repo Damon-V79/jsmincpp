@@ -1,0 +1,41 @@
+#ifndef INCLUDE_DESERIALIZE_GETNAME_H_
+#define INCLUDE_DESERIALIZE_GETNAME_H_
+
+#include <jsmincpp/deserialize/CRC32Hash.h>
+
+#include <cstdint>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename S >
+bool GetNameHash( S &p, CRC32Hash &h ) {
+
+  %% machine NameParser;
+  %% write data;
+
+  int cs;
+  S pe = p.End( );
+  S eof = p.End( );
+
+  %% write init;
+  %%{
+
+    action PUSH_SYMBOL { h( *p ); }
+    action RETURN_ERROR { h.Reset( ); return false; }
+    action RETURN_HASH { return true; }
+    main := ( '\"' ( [A-Za-z0-1_]+ ) $PUSH_SYMBOL '\":' ) $!RETURN_ERROR @RETURN_HASH;
+
+  }%%
+
+  %% write exec;
+
+  return true;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif         // INCLUDE_DESERIALIZE_GETNAME_H_

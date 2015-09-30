@@ -1,0 +1,48 @@
+#ifndef INCLUDE_DESERIALIZE_PARSEUINT_H_
+#define INCLUDE_DESERIALIZE_PARSEUINT_H_
+
+#include <jsmincpp/IntegerOverflowControl.h>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename T, typename S >
+bool ParseUInt( T &data, S &p ) {
+  
+  %% machine UnsignedIntegerParser;
+  %% write data;
+
+  int cs;
+  S pe = p.End( );
+  S eof = p.End( );
+
+  %% write init;
+  %%{
+
+    digit1_9 = [0-9];
+
+    action PUSH_INT {
+                     if( !jsmincpp::IntegerOverflowControl< T >::Mult( data, 10 ) )
+                       return false;
+                     if( !jsmincpp::IntegerOverflowControl< T >::Summ( data, ( *p - '0' ) ) )
+                       return false;
+                    }
+    int = digit1_9+ $PUSH_INT;
+
+    action RET_NUM { return true; }
+    action RET_ERROR { return false; }
+    value := int ( ',' | '}' | ']' ) $RET_NUM $!RET_ERROR;
+
+  }%%
+
+  %% write exec;
+
+  return false;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif         // INCLUDE_DESERIALIZE_PARSEUINT_H_

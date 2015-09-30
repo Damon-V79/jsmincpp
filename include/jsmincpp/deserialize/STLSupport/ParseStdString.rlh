@@ -1,0 +1,39 @@
+#ifndef INCLUDE_DESERIALIZE_STLSUPPORT_PARSESTDSTRING_H_
+#define INCLUDE_DESERIALIZE_STLSUPPORT_PARSESTDSTRING_H_
+
+#include <cstdint>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename T, typename S >
+bool ParseStdString( T &data, S &p ) {
+
+  %% machine StdStringParser;
+  %% write data;
+
+  int cs;
+  S pe = p.End( );
+  S eof = p.End( );
+
+  %% write init;
+  %%{
+
+    action PUSH_SYMBOL { data += *p; }
+    action RETURN_ERROR { return false; }
+    action RETURN_STRING { ++p; return true; }
+    main := ( '\"' ( [^"]* ) $PUSH_SYMBOL '\"' ) $!RETURN_ERROR @RETURN_STRING;
+
+  }%%
+
+  %% write exec;
+
+  return false;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif /* INCLUDE_DESERIALIZE_STLSUPPORT_PARSESTDSTRING_H_ */

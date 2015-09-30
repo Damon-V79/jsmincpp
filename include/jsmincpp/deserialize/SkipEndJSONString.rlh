@@ -1,0 +1,38 @@
+#ifndef INCLUDE_DESERIALIZE_SKIPENDJSONSTRING_H_
+#define INCLUDE_DESERIALIZE_SKIPENDJSONSTRING_H_
+
+#include <cstdint>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename S >
+bool SkipEndJSONString( S &p ) {
+
+  %% machine Skip_end_JSON_string;
+  %% write data;
+
+  int cs;
+  S pe = p.End( );
+  S eof = p.End( );
+  
+  %% write init;
+  %%{
+
+    action NEW_LEVEL { ++p; SkipEndJSONString( p ); }
+    action RETURN { ++p; return false; }
+    main := [^{}]* ( '{' $NEW_LEVEL | '}' $RETURN );
+
+  }%%
+
+  %% write exec;
+
+  return false;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif          // INCLUDE_DESERIALIZE_SKIPENDJSONSTRING_H_

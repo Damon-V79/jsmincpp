@@ -1,0 +1,60 @@
+#ifndef INCLUDE_DESERIALIZE_PARSEFLOAT_H_
+#define INCLUDE_DESERIALIZE_PARSEFLOAT_H_
+
+#include <cstdint>
+#include <cmath>
+
+namespace jsmincpp {
+
+namespace deserialize {
+
+template < typename T,typename S >
+bool ParseFloat( T &data, S &p ) {
+
+  %% machine FloatParser;
+  %% write data;
+
+  int cs;
+  T count = 1.0f;
+  uint32_t exp = 0;
+  T negNumber = 1;
+  T negExp = 1;
+
+  data = 0.0;
+  S pe = p.End( );
+  S eof = p.End( );
+
+  %% write init;
+  %%{
+
+    digit1_9 = [0-9];
+
+    action NEG_EXP { if( *p == '-' ) negExp = -1; }
+    e = ( 'e' | 'E' ) ( '+' | '-' )? $NEG_EXP;
+
+    action PUSH_EXP { exp = exp * 10 + ( *p - '0' ); }
+    exp = e digit1_9+ $PUSH_EXP;
+
+    action PUSH_FRAC { count /= 10; data += ( ( *p - '0' ) * count ); }
+    frac = '.' digit1_9+ $PUSH_FRAC;
+
+    action PUSH_INT { data = data * 10 + ( *p - '0' ); }
+    int = digit1_9+ $PUSH_INT;
+
+    action NEG_NUM { negNumber = -1; }
+    action RET_NUM { data = data * ::pow( 10, exp * negExp ) * negNumber; return true; }
+    action RET_ERROR { return false; }
+    value := '-'? $NEG_NUM ( int | int frac ) exp? ( ',' | '}' | ']' ) $RET_NUM $!RET_ERROR;
+
+  }%%
+
+  %% write exec;
+
+  return false;
+}
+
+}          // namespace deserialize
+
+}          // namespace jsmincpp
+
+#endif          // INCLUDE_DESERIALIZE_PARSEFLOAT_H_
